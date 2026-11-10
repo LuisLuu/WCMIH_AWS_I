@@ -1,3 +1,5 @@
 node_modules
-.env
-.bkp
+*.env
+*.bkp
+*.DS_Store
+*.pdf
