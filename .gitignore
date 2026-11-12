@@ -3,3 +3,4 @@ node_modules
 *.bkp
 *.DS_Store
 *.pdf
+client/dist/
