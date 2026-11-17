@@ -1,5 +1,5 @@
-node_modules
-*.env
-*.bkp
-*.DS_Store
-*.pdf
+node_modules/
+backend/node_modules/
+.env
+backend/.env
+.DS_Store
