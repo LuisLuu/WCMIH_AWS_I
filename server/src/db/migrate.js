@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('./config/db');
+const { pool } = require('../config/db');
 
 async function runMigrations() {
   const client = await pool.connect();
