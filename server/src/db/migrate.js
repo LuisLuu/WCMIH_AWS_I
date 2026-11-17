@@ -1,6 +1,10 @@
-const fs = require('fs');
-const path = require('path');
-const { pool } = require('../config/db');
+import fs from 'fs';
+import path from 'path';
+import { pool } from '../config/db.js';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function runMigrations() {
   const client = await pool.connect();
