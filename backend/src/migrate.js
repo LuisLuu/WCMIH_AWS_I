@@ -5,34 +5,34 @@ const { pool } = require('./config/db');
 async function runMigrations() {
   const client = await pool.connect();
   try {
-    console.log('--- 1. Kiểm tra kết nối tới Database ---');
+    console.log('--- 1. Checking database connection ---');
     const testRes = await client.query('SELECT NOW() AS current_time');
-    console.log('✅ Kết nối thành công! Giờ máy chủ:', testRes.rows[0].current_time);
+    console.log('✅ Connected successfully! Server time:', testRes.rows[0].current_time);
 
-    console.log('\n--- 2. Bắt đầu chạy các file Migration ---');
+    console.log('\n--- 2. Running migration files ---');
     const migrationsDir = path.join(__dirname, 'migrations');
     const files = fs.readdirSync(migrationsDir).sort();
 
     for (const file of files) {
       if (file.endsWith('.sql')) {
-        console.log(`Đang chạy: ${file}...`);
+        console.log(`Running: ${file}...`);
         const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
         await client.query(sql);
-        console.log(`✅ Hoàn thành: ${file}`);
+        console.log(`✅ Completed: ${file}`);
       }
     }
 
-    console.log('\n--- 3. Kiểm tra Extension pgvector ---');
+    console.log('\n--- 3. Checking pgvector extension ---');
     const extRes = await client.query("SELECT extname FROM pg_extension WHERE extname = 'vector'");
     if (extRes.rows.length > 0) {
-      console.log('✅ Extension pgvector đã được kích hoạt thành công!');
+      console.log('✅ The pgvector extension is enabled.');
     } else {
-      console.warn('⚠️ Cảnh báo: Chưa tìm thấy extension vector.');
+      console.warn('⚠️ Warning: The vector extension was not found.');
     }
 
-    console.log('\n🎉 Chạy thành công toàn bộ Migration!');
+    console.log('\n🎉 All migrations completed successfully!');
   } catch (err) {
-    console.error('❌ Lỗi xảy ra:', err);
+    console.error('❌ An error occurred:', err);
   } finally {
     client.release();
     await pool.end();

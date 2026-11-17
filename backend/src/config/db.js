@@ -9,7 +9,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Lỗi bất ngờ trên client PostgreSQL:', err);
+  console.error('Unexpected error on the PostgreSQL client:', err);
   process.exit(-1);
 });
 
