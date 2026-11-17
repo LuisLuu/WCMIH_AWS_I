@@ -1,9 +1,9 @@
-
-require("dotenv").config();
-
-const express = require("express");
-const cors = require("cors");
-const { verifyToken } = require("./src/api/middlewares/auth");
+import express from 'express';
+import actionsRouter from './src/api/routes/actions.js';
+import cors from 'cors';
+import verifyToken from './src/api/middlewares/auth.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
@@ -58,6 +58,7 @@ app.get("/api/protected", verifyToken, (req, res) => {
   });
 });
 
+app.use('/api/chat/actions', actionsRouter);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
