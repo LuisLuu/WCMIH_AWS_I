@@ -1,4 +1,8 @@
 node_modules
+# Local environment files may contain secrets. Keep only the safe template.
+.env
+.env.*
+!.env.example
 *.env
 *.bkp
 *.DS_Store
