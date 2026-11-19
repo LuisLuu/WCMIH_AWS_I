@@ -3,3 +3,8 @@ backend/node_modules/
 .env
 backend/.env
 .DS_Store
+# Frontend build output
+client/dist/
+
+# Local dependencies
+client/node_modules/

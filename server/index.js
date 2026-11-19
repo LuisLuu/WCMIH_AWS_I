@@ -1,5 +1,6 @@
 import express from 'express';
 import actionsRouter from './src/api/routes/actions.js';
+import streamRouter from './src/api/routes/stream.js';
 import cors from 'cors';
 import verifyToken from './src/api/middlewares/auth.js';
 import dotenv from 'dotenv';
@@ -59,6 +60,10 @@ app.get("/api/protected", verifyToken, (req, res) => {
 });
 
 app.use('/api/chat/actions', actionsRouter);
+
+// WCM-31: JWT-protected SSE streaming and cancellation
+app.use('/api/chat', verifyToken, streamRouter);
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
