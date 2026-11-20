@@ -66,3 +66,23 @@ export const getModelAdapter = () => {
     fallbacks: [geminiFree, new MockDriver({})],
   });
 };
+
+/**
+ * WCM-36: Return a real chat model for structured routing.
+ * Avoid wrapping it in RunnableWithFallbacks here.
+ */
+export function getSupervisorModel() {
+  if (process.env.MOCK_AGENTS === "true") {
+    return null;
+  }
+
+  if (process.env.OPENROUTER_API_KEY) {
+    return openRouterFree;
+  }
+
+  if (process.env.GEMINI_API_KEY) {
+    return geminiFree;
+  }
+
+  return null;
+}
