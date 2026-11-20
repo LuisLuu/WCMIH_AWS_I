@@ -1,10 +1,11 @@
-
 import express from "express";
-import { randomUUID } from "node:crypto";
 import {
   runMockStream,
+  runGraphStream,
   sendSSE
 } from "../../streaming/streamService.js";
+
+import { wcm39MockGraph } from "../../streaming/wcm39MockGraph.js";
 
 const router = express.Router();
 
@@ -65,17 +66,35 @@ router.post("/stream", async (req, res) => {
       status: "streaming"
     });
 
-    const result = await runMockStream({
+    
+const sendEvent = async (event, data) => {
+  if (controller.signal.aborted) return;
+
+  if (!sendSSE(res, event, data)) {
+    controller.abort();
+  }
+};
+
+// WCM-39 integration fixture is opt-in.
+// Existing WCM-31 behaviour remains the default.
+const useMockGraph =
+  process.env.NODE_ENV !== "production" &&
+  process.env.WCM39_MOCK_GRAPH === "true";
+
+const result = useMockGraph
+  ? await runGraphStream({
+      graph: wcm39MockGraph,
+      prompt,
+      threadId: streamId,
+      signal: controller.signal,
+      send: sendEvent
+    })
+  : await runMockStream({
       signal: controller.signal,
       delayMs: 500,
-      send: async (event, data) => {
-        if (controller.signal.aborted) return;
-
-        if (!sendSSE(res, event, data)) {
-          controller.abort();
-        }
-      }
+      send: sendEvent
     });
+
 
     if (
       result.status === "cancelled" &&

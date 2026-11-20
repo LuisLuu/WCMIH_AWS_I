@@ -1,5 +1,6 @@
 
 import { setTimeout as sleep } from "node:timers/promises";
+import { streamGraphEvents } from "./graphStreamAdapter.js";
 
 export function formatSSE(event, data) {
   if (
@@ -77,6 +78,64 @@ export async function runMockStream({
     return { status: "completed" };
   } catch (error) {
     if (signal?.aborted || error.name === "AbortError") {
+      return { status: "cancelled" };
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * WCM-39: Stream LangGraph execution to the SSE transport.
+ *
+ * Graph is injected to keep WCM-39 independent
+ * from the unmerged WCM-35/36 runtime.
+ */
+export async function runGraphStream({
+  graph,
+  prompt,
+  threadId,
+  signal,
+  send
+}) {
+  if (typeof send !== "function") {
+    throw new Error("INVALID_SEND_FUNCTION");
+  }
+
+  let awaitingApproval = false;
+
+  try {
+    signal?.throwIfAborted();
+
+    for await (const event of streamGraphEvents({
+      graph,
+      prompt,
+      threadId,
+      signal
+    })) {
+      signal?.throwIfAborted();
+
+      if (event.type === "approval_required") {
+        awaitingApproval = true;
+      }
+
+      await send(event.type, event.data);
+    }
+
+    signal?.throwIfAborted();
+
+    const status = awaitingApproval
+      ? "awaiting_approval"
+      : "completed";
+
+    await send("done", { status });
+
+    return { status };
+  } catch (error) {
+    if (
+      signal?.aborted ||
+      error.name === "AbortError"
+    ) {
       return { status: "cancelled" };
     }
 
