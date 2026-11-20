@@ -58,7 +58,7 @@ app.get("/api/protected", verifyToken, (req, res) => {
   });
 });
 
-app.use('/api/chat/actions', actionsRouter);
+app.use('/api/chat/actions', verifyToken, actionsRouter);
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
