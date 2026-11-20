@@ -3,6 +3,7 @@ import actionsRouter from './src/api/routes/actions.js';
 import cors from 'cors';
 import verifyToken from './src/api/middlewares/auth.js';
 import dotenv from 'dotenv';
+import keyRingRouter from "./src/api/routes/keyRing.js";
 dotenv.config();
 
 const app = express();
@@ -25,7 +26,7 @@ app.use(cors({
       callback(new Error("CORS_NOT_ALLOWED"));
     }
   },
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
@@ -59,6 +60,9 @@ app.get("/api/protected", verifyToken, (req, res) => {
 });
 
 app.use('/api/chat/actions', actionsRouter);
+// WCM-29: Key Ring API
+app.use("/api/keys", keyRingRouter);
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
