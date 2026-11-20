@@ -3,6 +3,7 @@ import actionsRouter from './src/api/routes/actions.js';
 import cors from 'cors';
 import verifyToken from './src/api/middlewares/auth.js';
 import dotenv from 'dotenv';
+import wcm30Router from "./src/api/routes/wcm30.js";
 import keyRingRouter from "./src/api/routes/keyRing.js";
 dotenv.config();
 
@@ -42,6 +43,9 @@ app.use((err, req, res, next) => {
 });
 
 app.use(express.json({ limit: "100kb" }));
+
+// WCM-30: authenticated local mock execution
+app.use("/api/wcm30", verifyToken, wcm30Router);
 
 // Kiểm tra server
 app.get("/api/health", (req, res) => {
