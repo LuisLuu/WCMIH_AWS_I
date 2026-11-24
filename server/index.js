@@ -1,8 +1,11 @@
 import express from 'express';
 import actionsRouter from './src/api/routes/actions.js';
+import streamRouter from './src/api/routes/stream.js';
 import cors from 'cors';
 import verifyToken from './src/api/middlewares/auth.js';
 import dotenv from 'dotenv';
+import wcm30Router from "./src/api/routes/wcm30.js";
+import keyRingRouter from "./src/api/routes/keyRing.js";
 dotenv.config();
 
 const app = express();
@@ -25,7 +28,7 @@ app.use(cors({
       callback(new Error("CORS_NOT_ALLOWED"));
     }
   },
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
@@ -41,6 +44,9 @@ app.use((err, req, res, next) => {
 });
 
 app.use(express.json({ limit: "100kb" }));
+
+// WCM-30: authenticated local mock execution
+app.use("/api/wcm30", verifyToken, wcm30Router);
 
 // Kiểm tra server
 app.get("/api/health", (req, res) => {
@@ -59,6 +65,13 @@ app.get("/api/protected", verifyToken, (req, res) => {
 });
 
 app.use('/api/chat/actions', verifyToken, actionsRouter);
+app.use('/api/chat/actions', actionsRouter);
+
+// WCM-31: JWT-protected SSE streaming and cancellation
+app.use('/api/chat', verifyToken, streamRouter);
+// WCM-29: Key Ring API
+app.use("/api/keys", keyRingRouter);
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
