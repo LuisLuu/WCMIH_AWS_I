@@ -64,6 +64,7 @@ app.get("/api/protected", verifyToken, (req, res) => {
   });
 });
 
+app.use('/api/chat/actions', verifyToken, actionsRouter);
 app.use('/api/chat/actions', actionsRouter);
 
 // WCM-31: JWT-protected SSE streaming and cancellation

@@ -1,16 +1,127 @@
-// A mock LangGraph object to test the WCM-28 checkpoint API
-export const graph = {
-  updateState: async (config, values, node) => {
-    console.log('\n--- [MOCK GRAPH STATE UPDATE] ---');
-    console.log(`Thread ID: ${config.configurable.thread_id}`);
-    console.log(`Updated Node: ${node}`);
-    console.log(`Injected Values:`, values);
-    console.log('---------------------------------\n');
-    return true;
-  },
-  
-  stream: async (input, config) => {
-    console.log(`[MOCK GRAPH] Simulating stream continuation...`);
-    return []; // Returns empty stream for mock
+
+import {
+  Annotation,
+  StateGraph,
+  START,
+  END,
+  interrupt
+} from "@langchain/langgraph";
+
+import { MemorySaver } from "@langchain/langgraph";
+import { routeIntent } from "./supervisor.js";
+
+// WCM-35: Real LangGraph state schema
+export const GraphState = Annotation.Root({
+  taskId: Annotation(),
+  prompt: Annotation(),
+  mode: Annotation(),
+  targetModel: Annotation(),
+  steps: Annotation(),
+  human_approval: Annotation(),
+  output: Annotation(),
+  status: Annotation()
+});
+
+// Temporary supervisor implementation.
+// WCM-36 will implement LLM-based routing.
+async function supervisorNode(state) {
+  const result = await routeIntent(
+    state.prompt,
+    state.taskId
+  );
+
+  return {
+    mode: result.mode,
+    targetModel: result.targetModel,
+    steps: result.steps,
+    status: "routed"
+  };
+}
+
+// Route based on the Supervisor decision.
+function routeAfterSupervisor(state) {
+  if (state.mode === "ESCALATE") {
+    return "human_approval_node";
   }
-};
+
+  return "specialist_node";
+}
+
+// Human approval gate, using real LangGraph interrupt.
+async function humanApprovalNode(state) {
+  const decision = interrupt({
+    taskId: state.taskId,
+    targetModel: state.targetModel,
+    steps: state.steps,
+    message: "Approval required"
+  });
+
+  if (
+    !decision ||
+    !["APPROVE", "DOWNGRADE", "REJECT"].includes(
+      decision.decision
+    )
+  ) {
+    throw new Error("INVALID_APPROVAL_DECISION");
+  }
+
+  return {
+    human_approval: decision.decision,
+    targetModel:
+      decision.decision === "DOWNGRADE"
+        ? "free"
+        : state.targetModel,
+    status:
+      decision.decision === "REJECT"
+        ? "rejected"
+        : "approved"
+  };
+}
+
+function routeAfterApproval(state) {
+  return state.status === "rejected"
+    ? END
+    : "specialist_node";
+}
+
+// Placeholder specialist for WCM-35.
+// No actual AI provider is invoked.
+async function specialistNode(state) {
+  return {
+    output: `MOCK SPECIALIST RESULT: ${state.prompt}`,
+    status: "completed"
+  };
+}
+
+export function createProjectGraph(checkpointer) {
+  const workflow = new StateGraph(GraphState)
+    .addNode("supervisor_node", supervisorNode)
+    .addNode("human_approval_node", humanApprovalNode)
+    .addNode("specialist_node", specialistNode)
+
+    .addEdge(START, "supervisor_node")
+
+    .addConditionalEdges(
+      "supervisor_node",
+      routeAfterSupervisor,
+      ["human_approval_node", "specialist_node"]
+    )
+
+    .addConditionalEdges(
+      "human_approval_node",
+      routeAfterApproval,
+      [END, "specialist_node"]
+    )
+
+    .addEdge("specialist_node", END);
+
+  return workflow.compile({
+    checkpointer
+  });
+}
+
+// Initial in-memory checkpointer for unit testing.
+// PostgreSQL will replace this in the persistence phase.
+export const graph = createProjectGraph(
+  new MemorySaver()
+);
