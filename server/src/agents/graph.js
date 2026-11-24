@@ -16,6 +16,7 @@ export const GraphState = Annotation.Root({
   prompt: Annotation(),
   mode: Annotation(),
   targetModel: Annotation(),
+  specialist: Annotation(),
   steps: Annotation(),
   human_approval: Annotation(),
   output: Annotation(),
@@ -24,8 +25,10 @@ export const GraphState = Annotation.Root({
 
 // Temporary supervisor implementation.
 // WCM-36 will implement LLM-based routing.
-async function supervisorNode(state) {
-  const result = await routeIntent(
+
+
+async function supervisorNode(state, router = routeIntent) {
+  const result = await router(
     state.prompt,
     state.taskId
   );
@@ -33,10 +36,13 @@ async function supervisorNode(state) {
   return {
     mode: result.mode,
     targetModel: result.targetModel,
+    specialist: result.specialist ?? "general",
     steps: result.steps,
     status: "routed"
   };
 }
+
+
 
 // Route based on the Supervisor decision.
 function routeAfterSupervisor(state) {
@@ -86,16 +92,29 @@ function routeAfterApproval(state) {
 
 // Placeholder specialist for WCM-35.
 // No actual AI provider is invoked.
+
 async function specialistNode(state) {
+  const specialist = state.specialist ?? "general";
+
+  // WCM-36: Specialist delegation metadata only.
+  // Real specialist execution will be implemented later.
   return {
     output: `MOCK SPECIALIST RESULT: ${state.prompt}`,
-    status: "completed"
+    status: "completed",
+    specialist
   };
 }
 
-export function createProjectGraph(checkpointer) {
+
+export function createProjectGraph(
+  checkpointer,
+  { router = routeIntent } = {}
+) {
   const workflow = new StateGraph(GraphState)
-    .addNode("supervisor_node", supervisorNode)
+    .addNode(
+  "supervisor_node",
+  (state) => supervisorNode(state, router)
+)
     .addNode("human_approval_node", humanApprovalNode)
     .addNode("specialist_node", specialistNode)
 
