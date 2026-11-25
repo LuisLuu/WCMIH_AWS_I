@@ -1,8 +1,8 @@
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { pool } from "./src/config/db.js";
-import { reserveQuota } from "./src/services/quotaGuard.js";
+import { pool } from "../src/config/db.js";
+import { reserveQuota } from "../src/services/quotaGuard.js";
 
 const userId = randomUUID();
 const email = `wcm30-${userId}@example.invalid`;

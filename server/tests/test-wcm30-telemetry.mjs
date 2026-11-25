@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { pool } from "./src/config/db.js";
-import { logModelUsage } from "./src/services/telemetryService.js";
+import { pool } from "../src/config/db.js";
+import { logModelUsage } from "../src/services/telemetryService.js";
 
 const userId = randomUUID();
 const client = await pool.connect();

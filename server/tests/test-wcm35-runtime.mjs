@@ -3,9 +3,9 @@ import { config } from "dotenv";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Command } from "@langchain/langgraph";
-import { getGraphRuntime, getGraph } from "./src/agents/graphRuntime.js";
+import { getGraphRuntime, getGraph } from "../src/agents/graphRuntime.js";
 
-config({ path: new URL("./.env", import.meta.url) });
+config({ path: new URL("../.env", import.meta.url) });
 
 let passed = 0;
 const check = (name, condition) => {

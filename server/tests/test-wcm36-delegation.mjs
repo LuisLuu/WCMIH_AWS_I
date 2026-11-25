@@ -8,7 +8,7 @@ import {
 
 import {
   createProjectGraph
-} from "./src/agents/graph.js";
+} from "../src/agents/graph.js";
 
 let passed = 0;
 

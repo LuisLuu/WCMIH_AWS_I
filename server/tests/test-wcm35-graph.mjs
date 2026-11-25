@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 
 import { Command } from "@langchain/langgraph";
-import { graph } from "./src/agents/graph.js";
+import { graph } from "../src/agents/graph.js";
 
 let passed = 0;
 

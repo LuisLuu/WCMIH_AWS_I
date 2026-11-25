@@ -1,10 +1,10 @@
 
 import { config } from "dotenv";
 import assert from "node:assert/strict";
-import { createProjectGraph } from "./src/agents/graph.js";
-import { createPostgresCheckpointer } from "./src/agents/postgresCheckpointer.js";
+import { createProjectGraph } from "../src/agents/graph.js";
+import { createPostgresCheckpointer } from "../src/agents/postgresCheckpointer.js";
 
-config({ path: new URL("./.env", import.meta.url) });
+config({ path: new URL("../.env", import.meta.url) });
 
 const threadId = process.argv[2];
 

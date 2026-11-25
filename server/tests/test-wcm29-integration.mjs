@@ -2,8 +2,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
-import { pool } from "./src/config/db.js";
-import { getDecryptedApiKey } from "./src/services/keyRingService.js";
+import { pool } from "../src/config/db.js";
+import { getDecryptedApiKey } from "../src/services/keyRingService.js";
 
 const baseUrl = `http://127.0.0.1:${process.env.PORT || 3001}`;
 const userA = randomUUID();

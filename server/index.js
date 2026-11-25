@@ -1,10 +1,11 @@
 import express from 'express';
+import authRouter from './src/api/routes/auth.js';
 import actionsRouter from './src/api/routes/actions.js';
 import streamRouter from './src/api/routes/stream.js';
 import cors from 'cors';
 import verifyToken from './src/api/middlewares/auth.js';
 import dotenv from 'dotenv';
-import wcm30Router from "./src/api/routes/wcm30.js";
+import telemetryRouter from "./src/api/routes/telemetry.js";
 import keyRingRouter from "./src/api/routes/keyRing.js";
 dotenv.config();
 
@@ -46,7 +47,10 @@ app.use((err, req, res, next) => {
 app.use(express.json({ limit: "100kb" }));
 
 // WCM-30: authenticated local mock execution
-app.use("/api/wcm30", verifyToken, wcm30Router);
+app.use("/api/wcm30", verifyToken, telemetryRouter);
+
+// WCM-43: Auth & 1-Click Demo Login API
+app.use("/api/auth", authRouter);
 
 // Kiểm tra server
 app.get("/api/health", (req, res) => {

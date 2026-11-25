@@ -1,14 +1,14 @@
 
 import { config } from "dotenv";
-config({ path: new URL("./.env", import.meta.url) });
+config({ path: new URL("../.env", import.meta.url) });
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
 
-import { pool } from "./src/config/db.js";
-import { createProjectGraph } from "./src/agents/graph.js";
-import { createPostgresCheckpointer } from "./src/agents/postgresCheckpointer.js";
+import { pool } from "../src/config/db.js";
+import { createProjectGraph } from "../src/agents/graph.js";
+import { createPostgresCheckpointer } from "../src/agents/postgresCheckpointer.js";
 
 const API = "http://localhost:3002";
 const usersToClean = [];
