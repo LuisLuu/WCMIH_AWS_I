@@ -1,4 +1,5 @@
 import express from 'express';
+import authRouter from './src/api/routes/auth.js';
 import actionsRouter from './src/api/routes/actions.js';
 import streamRouter from './src/api/routes/stream.js';
 import cors from 'cors';
@@ -47,6 +48,9 @@ app.use(express.json({ limit: "100kb" }));
 
 // WCM-30: authenticated local mock execution
 app.use("/api/wcm30", verifyToken, wcm30Router);
+
+// WCM-43: Auth & 1-Click Demo Login API
+app.use("/api/auth", authRouter);
 
 // Kiểm tra server
 app.get("/api/health", (req, res) => {
