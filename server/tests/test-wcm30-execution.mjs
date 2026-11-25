@@ -1,8 +1,8 @@
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { pool } from "./src/config/db.js";
-import { executeGuardedMock } from "./src/services/modelExecutionGuard.js";
+import { pool } from "../src/config/db.js";
+import { executeGuardedMock } from "../src/services/modelExecutionGuard.js";
 
 const userId = randomUUID();
 let passed = 0;

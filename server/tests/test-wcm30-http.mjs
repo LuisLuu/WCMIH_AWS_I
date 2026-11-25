@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import jwt from "jsonwebtoken";
-import { pool } from "./src/config/db.js";
+import { pool } from "../src/config/db.js";
 
 const userId = randomUUID();
 const baseUrl = `http://127.0.0.1:${process.env.PORT || 3001}`;

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { invokeRetrievalAgent } from './src/agents/graph.js';
+import { invokeRetrievalAgent } from '../src/agents/graph.js';
 
 console.log('🔍 Testing WCM-38 RAG Agent...\n');
 

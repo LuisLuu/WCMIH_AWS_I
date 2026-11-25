@@ -1,4 +1,4 @@
-import { routeIntent } from './src/agents/supervisor.js';
+import { routeIntent } from '../src/agents/supervisor.js';
 
 async function run() {
   const p1 = "What is the capital of France?";

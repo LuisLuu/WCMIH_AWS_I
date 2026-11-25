@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 
 import {
   routeIntent
-} from "./src/agents/supervisor.js";
+} from "../src/agents/supervisor.js";
 
 let passed = 0;
 

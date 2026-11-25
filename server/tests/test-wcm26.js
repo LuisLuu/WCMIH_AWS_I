@@ -1,4 +1,4 @@
-import { getModelAdapter } from './src/config/models.js';
+import { getModelAdapter } from '../src/config/models.js';
 
 async function run() {
   console.log("Starting failover test...");

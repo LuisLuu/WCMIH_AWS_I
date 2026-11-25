@@ -1,15 +1,15 @@
 
 import { config } from "dotenv";
-config({ path: new URL("./.env", import.meta.url) });
+config({ path: new URL("../.env", import.meta.url) });
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { Command } from "@langchain/langgraph";
 
-import { createProjectGraph } from "./src/agents/graph.js";
+import { createProjectGraph } from "../src/agents/graph.js";
 import {
   createPostgresCheckpointer
-} from "./src/agents/postgresCheckpointer.js";
+} from "../src/agents/postgresCheckpointer.js";
 
 let passed = 0;
 let checkpointer;

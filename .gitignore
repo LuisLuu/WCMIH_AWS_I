@@ -7,4 +7,5 @@ backend/.env
 client/dist/
 
 # Local dependencies
-client/node_modules/
+client/node_modules/.vite/
+client/.vite/

@@ -3,9 +3,9 @@ import "dotenv/config";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 
-import { createProjectGraph } from "./src/agents/graph.js";
+import { createProjectGraph } from "../src/agents/graph.js";
 import { createPostgresCheckpointer } from
-  "./src/agents/postgresCheckpointer.js";
+  "../src/agents/postgresCheckpointer.js";
 
 async function main() {
   const checkpointer = await createPostgresCheckpointer();

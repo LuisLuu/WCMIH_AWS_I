@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { config } from "dotenv";
 
 config({
-  path: new URL("./.env", import.meta.url)
+  path: new URL("../.env", import.meta.url)
 });
 
 const base = "http://127.0.0.1:3002";

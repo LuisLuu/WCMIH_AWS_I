@@ -1,11 +1,11 @@
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { pool } from "./src/config/db.js";
+import { pool } from "../src/config/db.js";
 import {
   reserveQuota,
   releaseQuota
-} from "./src/services/quotaGuard.js";
+} from "../src/services/quotaGuard.js";
 
 const userId = randomUUID();
 let passed = 0;

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   formatSSE,
   runMockStream
-} from "./src/streaming/streamService.js";
+} from "../src/streaming/streamService.js";
 
 let passed = 0;
 

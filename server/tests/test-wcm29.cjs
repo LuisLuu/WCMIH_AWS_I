@@ -6,7 +6,7 @@ const assert = require("node:assert/strict");
 const {
   encryptApiKey,
   decryptApiKey
-} = require("./src/services/keyRingCrypto.cjs");
+} = require("../src/services/keyRingCrypto.cjs");
 
 const dummyKey = "sk-dummy-key-not-real";
 const userId = "user-001";
