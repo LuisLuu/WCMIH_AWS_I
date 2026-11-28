@@ -1,3 +1,7 @@
+import {
+  formatStreamError,
+  isAbortError
+} from "../../streaming/streamErrorFormatter.js";
 import { getGraphRuntime } from "../../agents/graphRuntime.js";
 import { runGraphStream } from "../../streaming/streamService.js";
 import express from "express";
@@ -49,10 +53,16 @@ router.post("/stream", async (req, res) => {
   res.flushHeaders();
 
   const onClose = () => {
-    controller.abort();
-  };
+  // Normal response completion must not be treated
+  // as a client disconnect.
+  if (!res.writableEnded && !controller.signal.aborted) {
+    controller.abort(
+      new Error("CLIENT_DISCONNECTED")
+    );
+  }
+};
 
-  res.once("close", onClose);
+res.once("close", onClose);
 
   const heartbeat = setInterval(() => {
     if (!res.destroyed && !res.writableEnded) {
@@ -104,14 +114,20 @@ const result = useMock
       });
     }
   } catch (error) {
-  console.error("[WCM-39] LangGraph stream failed:", error);
+  if (isAbortError(error, controller.signal)) {
+    // Client disconnected or cancellation requested.
+    // Do not write to a closed response.
+    return;
+  }
+
+  console.error("[WCM-40] Stream execution failed:", {
+    code: formatStreamError(error).code
+  });
 
   if (!res.destroyed && !res.writableEnded) {
-      sendSSE(res, "error", {
-        code: "STREAM_EXECUTION_FAILED"
-      });
-    }
-  } finally {
+    sendSSE(res, "error", formatStreamError(error));
+  }
+} finally {
     clearInterval(heartbeat);
     res.removeListener("close", onClose);
     activeStreams.delete(streamId);
