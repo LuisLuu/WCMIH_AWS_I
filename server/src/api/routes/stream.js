@@ -1,4 +1,5 @@
-
+import { getGraphRuntime } from "../../agents/graphRuntime.js";
+import { runGraphStream } from "../../streaming/streamService.js";
 import express from "express";
 import { randomUUID } from "node:crypto";
 import {
@@ -65,17 +66,32 @@ router.post("/stream", async (req, res) => {
       status: "streaming"
     });
 
-    const result = await runMockStream({
+const send = async (event, data) => {
+  if (controller.signal.aborted) return;
+  if (!sendSSE(res, event, data)) {
+    controller.abort();
+  }
+};
+
+    const useMock = process.env.WCM39_MOCK_GRAPH === "true";
+
+const result = useMock
+  ? await runMockStream({
       signal: controller.signal,
       delayMs: 500,
-      send: async (event, data) => {
-        if (controller.signal.aborted) return;
+      send
+    })
+  : await (async () => {
+      const { graph } = await getGraphRuntime();
 
-        if (!sendSSE(res, event, data)) {
-          controller.abort();
-        }
-      }
-    });
+      return runGraphStream({
+        graph,
+        prompt,
+        threadId: streamId,
+        signal: controller.signal,
+        send
+      });
+    })();
 
     if (
       result.status === "cancelled" &&
@@ -88,7 +104,9 @@ router.post("/stream", async (req, res) => {
       });
     }
   } catch (error) {
-    if (!res.destroyed && !res.writableEnded) {
+  console.error("[WCM-39] LangGraph stream failed:", error);
+
+  if (!res.destroyed && !res.writableEnded) {
       sendSSE(res, "error", {
         code: "STREAM_EXECUTION_FAILED"
       });

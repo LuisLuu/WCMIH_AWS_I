@@ -83,3 +83,104 @@ export async function runMockStream({
     throw error;
   }
 }
+
+/**
+ * WCM-39: Stream real LangGraph execution events.
+ * The graph is injected for independent testing.
+ */
+export async function runGraphStream({
+  graph,
+  prompt,
+  threadId,
+  signal,
+  send
+}) {
+  if (!graph || typeof graph.streamEvents !== "function") {
+    throw new Error("LANGGRAPH_NOT_AVAILABLE");
+  }
+
+  if (typeof prompt !== "string" || !prompt.trim()) {
+    throw new Error("INVALID_PROMPT");
+  }
+
+  if (typeof send !== "function") {
+    throw new Error("INVALID_SEND_FUNCTION");
+  }
+
+  try {
+    const events = graph.streamEvents(
+      {
+        taskId: threadId,
+        prompt: prompt.trim()
+      },
+      {
+        version: "v2",
+        configurable: {
+          thread_id: threadId
+        },
+        signal
+      }
+    );
+
+    for await (const event of events) {
+      signal?.throwIfAborted();
+
+      if (event.event === "on_chat_model_stream") {
+        const content = event.data?.chunk?.content;
+
+        if (typeof content === "string" && content) {
+          await send("token", {
+            content
+          });
+        }
+      }
+
+      if (event.event === "on_chain_start" && event.name) {
+        await send("agent_start", {
+          agent: event.name
+        });
+      }
+
+      if (event.event === "on_chain_end" && event.name) {
+        await send("agent_end", {
+          agent: event.name
+        });
+      }
+    }
+
+    signal?.throwIfAborted();
+
+    signal?.throwIfAborted();
+
+const state = await graph.getState({
+  configurable: {
+    thread_id: threadId
+  }
+});
+
+const awaitingApproval = Boolean(state.next?.length);
+
+const status = awaitingApproval
+  ? "awaiting_approval"
+  : "completed";
+
+if (awaitingApproval) {
+  await send("approval_required", {
+    threadId,
+    status
+  });
+}
+
+await send("done", {
+  status
+});
+
+return { status };
+  } catch (error) {
+    if (signal?.aborted || error.name === "AbortError") {
+      return { status: "cancelled" };
+    }
+
+    throw error;
+  }
+}
