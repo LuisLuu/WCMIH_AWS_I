@@ -19,11 +19,15 @@ if (!CLIENT_URL || !process.env.JWT_SECRET) {
 
 // Cho phép React frontend truy cập qua trình duyệt
 
-const allowedOrigin = process.env.CLIENT_URL;
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:5174"
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || origin === CLIENT_URL) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("CORS_NOT_ALLOWED"));

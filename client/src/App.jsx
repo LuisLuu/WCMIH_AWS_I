@@ -5,7 +5,7 @@ import WCM31Stream from "./components/WCM31Stream.jsx";
 export default function App() {
   const [health, setHealth] = useState("Checking API...");
   const apiUrl =
-    import.meta.env.VITE_API_URL || "http://localhost:3002";
+    import.meta.env.VITE_API_URL || "http://localhost:3001";
 
   useEffect(() => {
     fetch(`${apiUrl}/api/health`)

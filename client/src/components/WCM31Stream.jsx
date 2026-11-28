@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3002";
+  import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 export default function WCM31Stream() {
   const [token, setToken] = useState("");
