@@ -11,7 +11,8 @@ export const escalationSchema = z.object({
     "coding",
     "database",
     "retrieval",
-    "infrastructure"
+    "infrastructure",
+    "architect"
   ]).default("general"),
   steps: z.array(z.string().min(1)).max(8)
 });
@@ -36,8 +37,9 @@ Specialist selection:
 - general: simple questions and general explanations.
 - coding: programming, debugging, software implementation.
 - database: SQL, schema design, database queries.
-- retrieval: internal documentation and knowledge search.
+- retrieval: internal documentation and knowledge search (documents, knowledge base, policies, runbooks).
 - infrastructure: cloud, deployment, Docker, DevOps.
+- architect: architecture, high-stakes system design, multi-service topologies, escalation security audits.
 
 For DIRECT, use specialist "general".
 For ESCALATE, choose the best matching specialist.
@@ -57,17 +59,36 @@ Rules:
 // Compatibility fallback for offline WCM-35 tests.
 // This is NOT LLM inference.
 function mockRoute(prompt, taskId) {
+  const lower = prompt.toLowerCase();
   const complex =
-    prompt.toLowerCase().includes("aws") ||
-    prompt.length > 100;
+    lower.includes("aws") ||
+    prompt.length > 100 ||
+    lower.includes("architecture") ||
+    lower.includes("audit") ||
+    lower.includes("search") ||
+    lower.includes("knowledge") ||
+    lower.includes("doc");
+
+  let specialist = "general";
+  if (lower.includes("retrieval") || lower.includes("search") || lower.includes("knowledge") || lower.includes("document") || lower.includes("doc")) {
+    specialist = "retrieval";
+  } else if (lower.includes("architect") || lower.includes("system design") || lower.includes("audit") || lower.includes("high-stakes")) {
+    specialist = "architect";
+  } else if (lower.includes("code") || lower.includes("debug") || lower.includes("javascript") || lower.includes("python")) {
+    specialist = "coding";
+  } else if (lower.includes("database") || lower.includes("sql") || lower.includes("postgres")) {
+    specialist = "database";
+  } else if (lower.includes("infrastructure") || lower.includes("docker") || lower.includes("deploy")) {
+    specialist = "infrastructure";
+  }
 
   return {
     taskId,
     mode: complex ? "ESCALATE" : "DIRECT",
     targetModel: complex ? "premium" : "gemini-2.5-flash",
-    specialist: "general",
+    specialist: complex ? specialist : "general",
     steps: complex
-      ? ["Review requested action", "Request approval"]
+      ? ["Review requested action", `Execute delegation via ${specialist} specialist`, "Request approval"]
       : []
   };
 }

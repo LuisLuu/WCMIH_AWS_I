@@ -144,11 +144,13 @@ export async function invokeRetrievalAgent(userQuery, options = {}) {
   }
 
   // ── Step 2: Search the Knowledge Vault ────────────────────────────────────
-  const rawChunks = await searchKnowledgeVault(queryEmbedding, {
-    limit,
-    userId,
-    sourceType,
-  });
+  let rawChunks = [];
+  try {
+    rawChunks = await searchKnowledgeVault(queryEmbedding, { limit, userId, sourceType });
+  } catch (dbErr) {
+    console.warn("[invokeRetrievalAgent] Knowledge Vault search warning:", dbErr.message);
+    rawChunks = [];
+  }
 
   // ── Step 3: Build context string ──────────────────────────────────────────
   let contextString;
