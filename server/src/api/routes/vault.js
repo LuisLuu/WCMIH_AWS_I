@@ -29,7 +29,17 @@ const upload = multer({
  * Accepts multipart/form-data upload with field 'file'
  * Optional body fields: source_type, session_id
  */
-router.post('/upload', upload.single('file'), async (req, res, next) => {
+router.post('/upload', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      if (err.message?.startsWith('INVALID_FILE_TYPE') || err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+      }
+      return next(err);
+    }
+    next();
+  });
+}, async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded. Expected multipart field "file".' });
