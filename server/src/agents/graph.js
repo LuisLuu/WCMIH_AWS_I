@@ -1,4 +1,3 @@
-
 import {
   Annotation,
   StateGraph,
@@ -9,6 +8,11 @@ import {
 
 import { MemorySaver } from "@langchain/langgraph";
 import { routeIntent } from "./supervisor.js";
+import { invokeRetrievalAgent } from "./specialists/retrievalAgent.js";
+import { invokeArchitectAgent } from "./specialists/architectAgent.js";
+
+// Re-export invokeRetrievalAgent so test-wcm38 and other callers can import from graph.js
+export { invokeRetrievalAgent, invokeArchitectAgent };
 
 // WCM-35: Real LangGraph state schema
 export const GraphState = Annotation.Root({
@@ -22,10 +26,6 @@ export const GraphState = Annotation.Root({
   output: Annotation(),
   status: Annotation()
 });
-
-// Temporary supervisor implementation.
-// WCM-36 will implement LLM-based routing.
-
 
 async function supervisorNode(state, router = routeIntent) {
   const result = await router(
@@ -42,15 +42,13 @@ async function supervisorNode(state, router = routeIntent) {
   };
 }
 
-
-
 // Route based on the Supervisor decision.
 function routeAfterSupervisor(state) {
   if (state.mode === "ESCALATE") {
     return "human_approval_node";
   }
 
-  return "specialist_node";
+  return routeToSpecialist(state);
 }
 
 // Human approval gate, using real LangGraph interrupt.
@@ -87,17 +85,24 @@ async function humanApprovalNode(state) {
 function routeAfterApproval(state) {
   return state.status === "rejected"
     ? END
-    : "specialist_node";
+    : routeToSpecialist(state);
 }
 
-// Placeholder specialist for WCM-35.
-// No actual AI provider is invoked.
+// Dynamic specialist router
+function routeToSpecialist(state) {
+  const specialist = state.specialist ?? "general";
+  if (specialist === "retrieval") {
+    return "retrieval_specialist_node";
+  }
+  if (specialist === "architect") {
+    return "architect_specialist_node";
+  }
+  return "specialist_node";
+}
 
+// Default generic specialist node (preserves backward compatibility with WCM-35/36 mocks)
 async function specialistNode(state) {
   const specialist = state.specialist ?? "general";
-
-  // WCM-36: Specialist delegation metadata only.
-  // Real specialist execution will be implemented later.
   return {
     output: `MOCK SPECIALIST RESULT: ${state.prompt}`,
     status: "completed",
@@ -105,6 +110,27 @@ async function specialistNode(state) {
   };
 }
 
+// Specialized retrieval agent node (WCM-38 / Track 2)
+async function retrievalSpecialistNode(state) {
+  const result = await invokeRetrievalAgent(state.prompt);
+  return {
+    output: result.answer || `RETRIEVAL_COMPLETED: ${state.prompt}`,
+    status: "completed",
+    specialist: "retrieval"
+  };
+}
+
+// Specialized architecture & execution agent node (WCM-46 / Track 2)
+async function architectSpecialistNode(state) {
+  const result = await invokeArchitectAgent(state.prompt, {
+    taskId: state.taskId
+  });
+  return {
+    output: result.answer || `ARCHITECT_ANALYSIS_COMPLETED: ${state.prompt}`,
+    status: "completed",
+    specialist: "architect"
+  };
+}
 
 export function createProjectGraph(
   checkpointer,
@@ -112,27 +138,31 @@ export function createProjectGraph(
 ) {
   const workflow = new StateGraph(GraphState)
     .addNode(
-  "supervisor_node",
-  (state) => supervisorNode(state, router)
-)
+      "supervisor_node",
+      (state) => supervisorNode(state, router)
+    )
     .addNode("human_approval_node", humanApprovalNode)
     .addNode("specialist_node", specialistNode)
+    .addNode("retrieval_specialist_node", retrievalSpecialistNode)
+    .addNode("architect_specialist_node", architectSpecialistNode)
 
     .addEdge(START, "supervisor_node")
 
     .addConditionalEdges(
       "supervisor_node",
       routeAfterSupervisor,
-      ["human_approval_node", "specialist_node"]
+      ["human_approval_node", "specialist_node", "retrieval_specialist_node", "architect_specialist_node"]
     )
 
     .addConditionalEdges(
       "human_approval_node",
       routeAfterApproval,
-      [END, "specialist_node"]
+      [END, "specialist_node", "retrieval_specialist_node", "architect_specialist_node"]
     )
 
-    .addEdge("specialist_node", END);
+    .addEdge("specialist_node", END)
+    .addEdge("retrieval_specialist_node", END)
+    .addEdge("architect_specialist_node", END);
 
   return workflow.compile({
     checkpointer
@@ -140,7 +170,6 @@ export function createProjectGraph(
 }
 
 // Initial in-memory checkpointer for unit testing.
-// PostgreSQL will replace this in the persistence phase.
 export const graph = createProjectGraph(
   new MemorySaver()
 );
